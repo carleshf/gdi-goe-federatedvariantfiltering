@@ -1,0 +1,7 @@
+{
+  "_id": "goe-aggregate",
+  "name": "GoE pooling and lambda search",
+  "tasks": [
+    { "task_id": "goe-aggregate-task", "single_node": true }
+  ]
+}

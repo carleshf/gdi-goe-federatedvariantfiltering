@@ -1,0 +1,33 @@
+{
+  "_id": "goe-aggregate-task",
+  "name": "GoE pooling and lambda search",
+  "author": "GDI GoE",
+  "version": "0.1.0",
+  "visibility": "public",
+  "image": {
+    "label": "goe-fedcomp-aggregator",
+    "hash": "",
+    "name": "goe-fedcomp-aggregator",
+    "repository": "REGISTRY",
+    "tag": "0.1.0"
+  },
+  "source_code": { "url": "" },
+  "persistent": false,
+  "pre_checks": true,
+  "cpus": 1,
+  "memory": "2gb",
+  "command": {
+    "base": "goe-aggregate",
+    "args": [
+      { "id": "in_dir",       "type": "str",   "default_value": "/sandbox", "position": 1, "prefix": "--in-dir",       "separate": true, "required": false },
+      { "id": "out_dir",      "type": "str",   "default_value": "/sandbox", "position": 2, "prefix": "--out-dir",      "separate": true, "required": false },
+      { "id": "fst",          "type": "float", "default_value": 0.01,       "position": 3, "prefix": "--fst",          "separate": true, "required": true  },
+      { "id": "ll_min",       "type": "float", "default_value": -50.0,      "position": 4, "prefix": "--ll-min",       "separate": true, "required": false },
+      { "id": "ll_max",       "type": "float", "default_value": 0.0,        "position": 5, "prefix": "--ll-max",       "separate": true, "required": false },
+      { "id": "coarse_steps", "type": "int",   "default_value": 9,          "position": 6, "prefix": "--coarse-steps", "separate": true, "required": false },
+      { "id": "step_min",     "type": "float", "default_value": 0.5,        "position": 7, "prefix": "--step-min",     "separate": true, "required": false },
+      { "id": "lambda_0",     "type": "float", "default_value": -25.0,      "position": 8, "prefix": "--lambda-0",     "separate": true, "required": false },
+      { "id": "step_init",    "type": "float", "default_value": 5.0,        "position": 9, "prefix": "--step-init",    "separate": true, "required": false }
+    ]
+  }
+}

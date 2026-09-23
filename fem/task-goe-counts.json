@@ -1,0 +1,28 @@
+{
+  "_id": "goe-counts-task",
+  "name": "GoE cohort allele counts",
+  "author": "GDI GoE",
+  "version": "0.1.0",
+  "visibility": "public",
+  "image": {
+    "label": "goe-fedcomp-client",
+    "hash": "",
+    "name": "goe-fedcomp-client",
+    "repository": "REGISTRY",
+    "tag": "0.1.0"
+  },
+  "source_code": { "url": "" },
+  "persistent": false,
+  "pre_checks": true,
+  "cpus": 2,
+  "memory": "4gb",
+  "command": {
+    "base": "goe-client",
+    "args": [
+      { "id": "node",     "type": "str", "default_value": "",         "position": 1, "prefix": "--node",     "separate": true, "required": true  },
+      { "id": "data_dir", "type": "str", "default_value": "/data",    "position": 2, "prefix": "--data-dir", "separate": true, "required": false },
+      { "id": "out_dir",  "type": "str", "default_value": "/sandbox", "position": 3, "prefix": "--out-dir",  "separate": true, "required": false },
+      { "id": "cores",    "type": "int", "default_value": 2,          "position": 4, "prefix": "--cores",    "separate": true, "required": false }
+    ]
+  }
+}

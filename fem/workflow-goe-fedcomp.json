@@ -1,0 +1,41 @@
+{
+  "parameters": {
+    "workflow_storage_node": "CENTRAL"
+  },
+  "execution_nodes": {
+    "Spain":   [ { "tool": "goe-counts",    "roles": ["client"] } ],
+    "Germany": [ { "tool": "goe-counts",    "roles": ["client"] } ],
+    "Czechia": [ { "tool": "goe-counts",    "roles": ["client"] } ],
+    "CENTRAL": [ { "tool": "goe-aggregate", "roles": ["client", "server"] } ]
+  },
+  "tools": [
+    {
+      "tool_id": "goe-counts",
+      "inputs": {
+        "global": {},
+        "per_role": {
+          "Spain":   { "node": "Spain" },
+          "Germany": { "node": "Germany" },
+          "Czechia": { "node": "Czechia" }
+        }
+      }
+    },
+    {
+      "tool_id": "goe-aggregate",
+      "depends_on": { "tool_id": "goe-counts", "check_outputs": false },
+      "outputs": [],
+      "inputs": {
+        "global": {},
+        "per_role": {
+          "server": {
+            "fst": 0.01,
+            "ll_min": -50.0,
+            "ll_max": 0.0,
+            "coarse_steps": 9,
+            "step_min": 0.5
+          }
+        }
+      }
+    }
+  ]
+}
