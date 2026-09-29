@@ -1,0 +1,209 @@
+{
+  "federation_id": "f244330a464d9",
+  "fst": 0.01,
+  "countries": [
+    "Spain",
+    "Germany",
+    "Czechia"
+  ],
+  "baseline_intersection": 391,
+  "rounds": 13,
+  "best": {
+    "f1": 0.8571428571428572,
+    "jaccard": 0.755859375,
+    "recall": 0.989769820971867,
+    "intersection": 387,
+    "union": 512,
+    "per_country": {
+      "Spain": 432,
+      "Germany": 432,
+      "Czechia": 435
+    },
+    "round": 10,
+    "ll_thresh": -9.375
+  },
+  "history": [
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 1,
+      "ll_thresh": -50.0
+    },
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 2,
+      "ll_thresh": -43.75
+    },
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 3,
+      "ll_thresh": -37.5
+    },
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 4,
+      "ll_thresh": -31.25
+    },
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 5,
+      "ll_thresh": -25.0
+    },
+    {
+      "f1": 0.8053553038105046,
+      "jaccard": 0.6741379310344827,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 580,
+      "per_country": {
+        "Spain": 458,
+        "Germany": 457,
+        "Czechia": 456
+      },
+      "round": 6,
+      "ll_thresh": -18.75
+    },
+    {
+      "f1": 0.8231578947368421,
+      "jaccard": 0.6994633273703041,
+      "recall": 1.0,
+      "intersection": 391,
+      "union": 559,
+      "per_country": {
+        "Spain": 451,
+        "Germany": 452,
+        "Czechia": 447
+      },
+      "round": 7,
+      "ll_thresh": -12.5
+    },
+    {
+      "f1": 0.8032786885245902,
+      "jaccard": 0.7408207343412527,
+      "recall": 0.8772378516624041,
+      "intersection": 343,
+      "union": 463,
+      "per_country": {
+        "Spain": 400,
+        "Germany": 397,
+        "Czechia": 401
+      },
+      "round": 8,
+      "ll_thresh": -6.25
+    },
+    {
+      "f1": 0.0,
+      "jaccard": 0.0,
+      "recall": 0.0,
+      "intersection": 0,
+      "union": 0,
+      "per_country": {
+        "Spain": 0,
+        "Germany": 0,
+        "Czechia": 0
+      },
+      "round": 9,
+      "ll_thresh": 0.0
+    },
+    {
+      "f1": 0.8571428571428572,
+      "jaccard": 0.755859375,
+      "recall": 0.989769820971867,
+      "intersection": 387,
+      "union": 512,
+      "per_country": {
+        "Spain": 432,
+        "Germany": 432,
+        "Czechia": 435
+      },
+      "round": 10,
+      "ll_thresh": -9.375
+    },
+    {
+      "f1": 0.8032786885245902,
+      "jaccard": 0.7408207343412527,
+      "recall": 0.8772378516624041,
+      "intersection": 343,
+      "union": 463,
+      "per_country": {
+        "Spain": 400,
+        "Germany": 397,
+        "Czechia": 401
+      },
+      "round": 11,
+      "ll_thresh": -6.25
+    },
+    {
+      "f1": 0.8441558441558441,
+      "jaccard": 0.7317073170731707,
+      "recall": 0.9974424552429667,
+      "intersection": 390,
+      "union": 533,
+      "per_country": {
+        "Spain": 441,
+        "Germany": 443,
+        "Czechia": 439
+      },
+      "round": 12,
+      "ll_thresh": -10.9375
+    },
+    {
+      "f1": 0.8523489932885906,
+      "jaccard": 0.757455268389662,
+      "recall": 0.9744245524296675,
+      "intersection": 381,
+      "union": 503,
+      "per_country": {
+        "Spain": 425,
+        "Germany": 427,
+        "Czechia": 432
+      },
+      "round": 13,
+      "ll_thresh": -8.59375
+    }
+  ]
+}

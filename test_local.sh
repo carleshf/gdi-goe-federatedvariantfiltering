@@ -2,20 +2,25 @@
 # Run the FEM task images locally, moving files the way an FEM workflow does,
 # and compare the result with the reference run of orchestrator.py.
 #
-#   bash goe-fem/test_local.sh            (from the repository root)
+#   bash test_local.sh
 #
-# Needs the simulated node data (snakemake--workflow/scripts/make_mock_data.py).
+# Generates the simulated node data first if it is missing.
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "$0")/.." && pwd)
-WF="$ROOT/snakemake--workflow"
-RUN="$ROOT/goe-fem/test-run"
+ROOT=$(cd "$(dirname "$0")" && pwd)
+WF="$ROOT/workflow"
+RUN="$ROOT/test-run"
 NODES=${NODES:-"Spain Germany Czechia"}
 REFERENCE=${REFERENCE:-"$WF/central/f244330a464d9/metrics.json"}
 USER_FLAG="--user $(id -u):$(id -g)"
 
-docker build -q -f "$ROOT/goe-fem/client/Dockerfile"     -t goe-fedcomp-client     "$ROOT" >/dev/null
-docker build -q -f "$ROOT/goe-fem/aggregator/Dockerfile" -t goe-fedcomp-aggregator "$ROOT" >/dev/null
+# Same parameters and fixed seed as the reference run.
+if [ ! -d "$WF/nodes" ]; then
+  python3 "$WF/scripts/make_mock_data.py" 60 400 60
+fi
+
+docker build -q -f "$ROOT/client/Dockerfile"     -t goe-fedcomp-client     "$ROOT" >/dev/null
+docker build -q -f "$ROOT/aggregator/Dockerfile" -t goe-fedcomp-aggregator "$ROOT" >/dev/null
 
 rm -rf "$RUN"
 mkdir -p "$RUN/central"

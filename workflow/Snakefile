@@ -1,0 +1,87 @@
+import os
+import sys
+import pandas as pd
+from snakemake.utils import min_version
+
+min_version("5.18.0")
+
+# Optional. A node that cannot have files staged into it passes everything on
+# the command line instead:
+#
+#   snakemake -s Snakefile --cores 4 --config round=3 fst=0.01 \
+#             ll_thresh=-9.375 global_freq=/path/global_freq.json fed_id=fabc123
+#
+# --config values are parsed as YAML, so numbers arrive as numbers and the
+# sample list can be given as [a, b, c].
+if os.path.exists("config.json"):
+    configfile: "config.json"
+
+##### Config processing #####
+
+DATA_DIR = config.get("data_dir", "genomic_varcalls")
+
+for required in ("round", "fst", "ll_thresh"):
+    if required not in config:
+        sys.exit("config: missing %r -- pass it in config.json or with "
+                 "--config %s=<value>" % (required, required))
+
+# Samples come from whichever source is available: a config.json samples block,
+# a list passed on the command line, or the node's own data directory. The last
+# case needs nothing configured at all, and keeps sample identifiers from having
+# to travel.
+if "samples" in config and config["samples"]:
+    supplied = config["samples"]
+    if isinstance(supplied, dict):
+        sample_tab = pd.DataFrame.from_dict(supplied, orient="index")
+    else:
+        sample_tab = pd.DataFrame({"sample_name": [str(s) for s in supplied]})
+else:
+    if not os.path.isdir(DATA_DIR):
+        sys.exit("config: no samples given and no %r directory to discover them "
+                 "in (set data_dir)" % DATA_DIR)
+    discovered = sorted(n[: -len(".vcf.gz")] for n in os.listdir(DATA_DIR)
+                        if n.endswith(".vcf.gz"))
+    if not discovered:
+        sys.exit("config: no .vcf.gz files found in %r" % DATA_DIR)
+    sample_tab = pd.DataFrame({"sample_name": discovered})
+
+round_id    = int(config["round"])
+fst         = float(config["fst"])
+ll_thresh   = float(config["ll_thresh"])
+global_freq = str(config.get("global_freq", ""))
+
+# Identifies the federation generation. The central node derives it from the
+# participating countries and their pooled allele frequencies, so it changes
+# whenever a country joins or leaves, or whenever any country's own data
+# changes. Round results are stored underneath it, which means a new
+# generation writes into a fresh directory and cannot reuse the previous
+# generation's filtering -- the invalidation is structural rather than a
+# question of whether the frequency file happened to get a newer timestamp.
+fed_id      = str(config.get("fed_id", "adhoc"))
+
+if round_id > 0 and not global_freq:
+    sys.exit("config: round %d needs the central node's global frequency file "
+             "(set global_freq)" % round_id)
+
+wildcard_constraints:
+    sample = "|".join(sample_tab.sample_name),
+    round = "[0-9]+",
+    fed = "[A-Za-z0-9._-]+"
+
+
+##### Target rules #####
+
+# Round 0 publishes this node's own allele counts. They depend on nothing but
+# its own data, so they live outside the generation directory and are reused
+# across generations -- adding a country never re-parses anyone's VCFs.
+def federated_deliverable():
+    if round_id == 0:
+        return expand("federated_results/round_{round}_counts.csv", round = round_id)
+    return expand("federated_results/{fed}/round_{round}_passing.txt",
+                  fed = fed_id, round = round_id)
+
+rule all:
+    input:  federated_result = federated_deliverable()
+
+##### Modules #####
+include: "rules/federated_filtering.smk"

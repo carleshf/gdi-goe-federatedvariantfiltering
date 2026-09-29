@@ -1,8 +1,11 @@
 # GoE federated comparison on FEM
 
-Container packaging of [`snakemake--workflow/`](../snakemake--workflow/) for the
-Federated Execution Manager ([`fem-orchestrator`](../fem-orchestrator/),
-[`fem-client`](../fem-client/)). It produces the same analysis, with the same
+Container packaging of the GoE federated variant filtering workflow
+([`workflow/`](workflow/), described in
+[`docs/workflow-description.md`](docs/workflow-description.md)) for the
+Federated Execution Manager
+([`fem-orchestrator`](https://gitlab.bsc.es/fl/fem-orchestrator),
+[`fem-client`](https://gitlab.bsc.es/fl/fem-client)). It produces the same analysis, with the same
 λ\*, F1 and per-round passing lists, as `orchestrator.py`.
 
 | Image | Runs on | FEM tool | Does |
@@ -35,6 +38,8 @@ filter to the published tables and gets the same passing lists. The outcome:
 ## Files
 
 ```
+workflow/                                 the Snakemake workflow and original orchestrator.py
+docs/workflow-description.md              how the workflow works (server vs client steps)
 client/Dockerfile, goe_client.py          client image (build context: repo root)
 aggregator/Dockerfile, goe_aggregate.py   aggregator image (build context: repo root)
 fem/task-goe-counts.json                  FEM task documents (docs/schemas/task.json)
@@ -42,6 +47,7 @@ fem/task-goe-aggregate.json
 fem/tool-goe-counts.json                  FEM tool documents (tasks + single_node)
 fem/tool-goe-aggregate.json
 fem/workflow-goe-fedcomp.json             body for POST /workflows/run-workflow/
+push_images.sh                            build and push both images
 test_local.sh                             end-to-end check without FEM
 ```
 
@@ -49,16 +55,17 @@ test_local.sh                             end-to-end check without FEM
 
 ```bash
 # from the repository root
-docker build -f goe-fem/client/Dockerfile     -t goe-fedcomp-client .
-docker build -f goe-fem/aggregator/Dockerfile -t goe-fedcomp-aggregator .
+docker build -f client/Dockerfile     -t goe-fedcomp-client .
+docker build -f aggregator/Dockerfile -t goe-fedcomp-aggregator .
 
-bash goe-fem/test_local.sh
+bash test_local.sh
 ```
 
-`test_local.sh` runs one client container per country as a non-root user,
+`test_local.sh` first generates the simulated node data if it is missing
+(`workflow/scripts/make_mock_data.py 60 400 60`, fixed seed). It then runs one client container per country as a non-root user,
 with the data mounted read-only. It then copies the sandboxes to a central
 directory the way FEM does, runs the aggregator, and compares the result with
-`snakemake--workflow/central/f244330a464d9/metrics.json`.
+`workflow/central/f244330a464d9/metrics.json`.
 
 ## Deploying on FEM
 
@@ -66,7 +73,7 @@ directory the way FEM does, runs the aggregator, and compares the result with
    as `.../goe-fedcomp-client` and `.../goe-fedcomp-aggregator`:
    ```bash
    docker login registry.gitlab.bsc.es
-   bash goe-fem/push_images.sh        # TAG=... to change the version (default 0.1.0)
+   bash push_images.sh                # TAG=... to change the version (default 0.1.0)
    ```
    Then copy the digests the script prints into `image.hash` in
    `fem/task-*.json`. If the tag changes, update `image.tag` there too.
@@ -166,7 +173,7 @@ goe-client --data-dir /data --out-dir /sandbox --node Spain
 | **Input** | `input` (`--in-dir`) | `%%sandbox_execution%%` | `goe-counts.<node>.csv` from every client, delivered by FEM before the task starts |
 | **Output** | `output` (`--out-dir`) | `%%sandbox_execution%%` | `metrics.json`, `global_freq.json`, `rounds/<r>/<node>_round_<r>_passing.txt` |
 | Parameter | `fst` (`--fst`) | `0.01` | Wright's F_ST |
-| Parameter | `ll_min`, `ll_max` | `-50.0`, `0.0` | λ search range; must suit the cohort size (see Part 1 in the top-level README) |
+| Parameter | `ll_min`, `ll_max` | `-50.0`, `0.0` | λ search range; must suit the cohort size (see [`docs/workflow-description.md`](docs/workflow-description.md)) |
 | Parameter | `coarse_steps` | `9` | Thresholds scanned before refining; below 2 disables the scan |
 | Parameter | `step_min` | `0.5` | Convergence criterion |
 | Parameter | `lambda_0`, `step_init` | `-25.0`, `5.0` | Start point and step, only when the scan is disabled |

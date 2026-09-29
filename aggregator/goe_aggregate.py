@@ -4,7 +4,7 @@ FEM aggregator task -- the whole central side of the GoE analysis.
 
 Reads the cohort count tables the client task published (goe-counts.<node>.csv,
 delivered into this execution's sandbox by the FEM workflow), then does what
-snakemake--workflow/orchestrator.py does:
+workflow/orchestrator.py does:
 
     pool        global allele frequencies and the baseline intersection I0
     search      coarse scan over lambda, then hill climbing on F1

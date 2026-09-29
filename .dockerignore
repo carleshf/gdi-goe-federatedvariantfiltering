@@ -1,0 +1,6 @@
+# Keep node data, run outputs and history out of every image build context.
+.git
+test-run
+workflow/nodes
+workflow/central
+**/__pycache__
