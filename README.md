@@ -62,8 +62,14 @@ directory the way FEM does, runs the aggregator, and compares the result with
 
 ## Deploying on FEM
 
-1. Push both images to your registry. Then, in `fem/task-*.json`, fill in
-   `image.repository` (currently `REGISTRY`), `image.tag` and `image.hash`.
+1. Push both images to the GitLab project `fl/gdi-goe-federatedvariantfiltering`,
+   as `.../goe-fedcomp-client` and `.../goe-fedcomp-aggregator`:
+   ```bash
+   docker login registry.gitlab.bsc.es
+   bash goe-fem/push_images.sh        # TAG=... to change the version (default 0.1.0)
+   ```
+   Then copy the digests the script prints into `image.hash` in
+   `fem/task-*.json`. If the tag changes, update `image.tag` there too.
 2. Insert the task documents and tool documents into the orchestrator's
    `tasks` and `tools` collections.
 3. In `fem/workflow-goe-fedcomp.json`:
@@ -82,9 +88,10 @@ not in this repository) decides how the container is started. The defaults
 here assume the following:
 
 - **Node VCFs** are mounted at `/data`, as `<sample>.vcf.gz` at the top level.
-  Otherwise, pass `data_dir` per node in `per_role`.
-- **Execution sandbox** is mounted at `/sandbox`. Otherwise, pass `out_dir`
-  (client), or `in_dir` and `out_dir` (aggregator).
+  Otherwise, pass `input` per node in `per_role`.
+- **Execution sandbox** is reachable at `%%sandbox_execution%%`, which
+  fem-client resolves to its sandbox path (`/sandbox` with the Docker launcher).
+  Otherwise, override `output` (client), or `input` and `output` (aggregator).
 - **Container command:** the container is started with the task command and
   no entrypoint override. Neither image defines an `ENTRYPOINT`. Both images
   work when run as an arbitrary host uid.
@@ -106,13 +113,142 @@ The FEM behaviours this design relies on come from reading
   Snakemake fails, the last 40 lines of its log are printed, and those can
   name samples.
 
-## Parameters
+## Execution examples
 
-Client (`goe-counts`): `node` is required. `data_dir`, `out_dir` and `cores`
-are optional.
+### Client: `goe-counts` (every data node)
 
-Aggregator (`goe-aggregate`, via `per_role.server`): `fst`, `ll_min`,
-`ll_max`, `coarse_steps`, `step_min`, `lambda_0`, `step_init`, `in_dir` and
-`out_dir`. These mirror the orchestrator's environment variables, with the
-same defaults. The λ range still has to suit the cohort size (see Part 1 in
-the top-level README).
+| | Argument | Default | Content |
+|---|---|---|---|
+| **Input** | `input` (`--data-dir`) | `/data` | The node's `<sample>.vcf.gz` files, read-only |
+| **Output** | `output` (`--out-dir`) | `%%sandbox_execution%%` | Exactly one file, `goe-counts.<node>.csv` |
+| Parameter | `node` (`--node`) | none, required | The node's FEM name; it becomes part of the output file name |
+| Parameter | `cores` (`--cores`) | `2` | Snakemake cores |
+
+Task command ([`fem/task-goe-counts.json`](fem/task-goe-counts.json)):
+
+```json
+"command": {
+  "base": "goe-client",
+  "args": [
+    { "id": "input",  "type": "str", "default_value": "/data",                 "position": 1, "prefix": "--data-dir", "separate": true, "required": true  },
+    { "id": "output", "type": "str", "default_value": "%%sandbox_execution%%", "position": 2, "prefix": "--out-dir",  "separate": true, "required": true  },
+    { "id": "node",   "type": "str", "default_value": "",                      "position": 3, "prefix": "--node",     "separate": true, "required": true  },
+    { "id": "cores",  "type": "int", "default_value": 2,                       "position": 4, "prefix": "--cores",    "separate": true, "required": false }
+  ]
+}
+```
+
+`node` has no default, so each node's value comes from the workflow:
+
+```json
+"per_role": {
+  "Spain":   { "node": "Spain" },
+  "Germany": { "node": "Germany" },
+  "Czechia": { "node": "Czechia" }
+}
+```
+
+Command run at Spain, and the resulting sandbox:
+
+```
+goe-client --data-dir /data --out-dir /sandbox --node Spain
+
+/sandbox/
+└── goe-counts.Spain.csv        Variant,CHROM,POS,AC,AN
+                                1:100000:A:G,1,100000,53,120
+                                ...
+```
+
+### Aggregator: `goe-aggregate` (central node)
+
+| | Argument | Default | Content |
+|---|---|---|---|
+| **Input** | `input` (`--in-dir`) | `%%sandbox_execution%%` | `goe-counts.<node>.csv` from every client, delivered by FEM before the task starts |
+| **Output** | `output` (`--out-dir`) | `%%sandbox_execution%%` | `metrics.json`, `global_freq.json`, `rounds/<r>/<node>_round_<r>_passing.txt` |
+| Parameter | `fst` (`--fst`) | `0.01` | Wright's F_ST |
+| Parameter | `ll_min`, `ll_max` | `-50.0`, `0.0` | λ search range; must suit the cohort size (see Part 1 in the top-level README) |
+| Parameter | `coarse_steps` | `9` | Thresholds scanned before refining; below 2 disables the scan |
+| Parameter | `step_min` | `0.5` | Convergence criterion |
+| Parameter | `lambda_0`, `step_init` | `-25.0`, `5.0` | Start point and step, only when the scan is disabled |
+
+Task command ([`fem/task-goe-aggregate.json`](fem/task-goe-aggregate.json)):
+
+```json
+"command": {
+  "base": "goe-aggregate",
+  "args": [
+    { "id": "input",        "type": "str",   "default_value": "%%sandbox_execution%%", "position": 1, "prefix": "--in-dir",       "separate": true, "required": true  },
+    { "id": "output",       "type": "str",   "default_value": "%%sandbox_execution%%", "position": 2, "prefix": "--out-dir",      "separate": true, "required": true  },
+    { "id": "fst",          "type": "float", "default_value": 0.01,                    "position": 3, "prefix": "--fst",          "separate": true, "required": true  },
+    { "id": "ll_min",       "type": "float", "default_value": -50.0,                   "position": 4, "prefix": "--ll-min",       "separate": true, "required": false },
+    { "id": "ll_max",       "type": "float", "default_value": 0.0,                     "position": 5, "prefix": "--ll-max",       "separate": true, "required": false },
+    { "id": "coarse_steps", "type": "int",   "default_value": 9,                       "position": 6, "prefix": "--coarse-steps", "separate": true, "required": false },
+    { "id": "step_min",     "type": "float", "default_value": 0.5,                     "position": 7, "prefix": "--step-min",     "separate": true, "required": false },
+    { "id": "lambda_0",     "type": "float", "default_value": -25.0,                   "position": 8, "prefix": "--lambda-0",     "separate": true, "required": false },
+    { "id": "step_init",    "type": "float", "default_value": 5.0,                     "position": 9, "prefix": "--step-init",    "separate": true, "required": false }
+  ]
+}
+```
+
+Parameters come from the workflow's `per_role.server`:
+
+```json
+"per_role": {
+  "server": { "fst": 0.01, "ll_min": -50.0, "ll_max": 0.0, "coarse_steps": 9, "step_min": 0.5 }
+}
+```
+
+Command run at the central node, and the resulting sandbox:
+
+```
+goe-aggregate --in-dir /sandbox --out-dir /sandbox --fst 0.01 --ll-min -50.0 --ll-max 0.0 --coarse-steps 9 --step-min 0.5
+
+/sandbox/
+├── goe-counts.Spain.csv          inputs, delivered by FEM
+├── goe-counts.Germany.csv
+├── goe-counts.Czechia.csv
+├── global_freq.json              pooled allele frequency per variant
+├── metrics.json                  the result: best λ, F1, Jaccard, recall, full history
+└── rounds/
+    ├── 1/Spain_round_1_passing.txt
+    ├── 1/Germany_round_1_passing.txt
+    ├── ...
+    └── 13/Czechia_round_13_passing.txt
+```
+
+`metrics.json` (abridged, from the simulated data):
+
+```json
+{
+  "federation_id": "f244330a464d9",
+  "countries": ["Czechia", "Germany", "Spain"],
+  "baseline_intersection": 391,
+  "rounds": 13,
+  "best": { "ll_thresh": -9.375, "f1": 0.8571, "jaccard": 0.7559, "recall": 0.9898,
+            "intersection": 387, "per_country": { "Czechia": 435, "Germany": 432, "Spain": 432 } },
+  "history": [ ... ]
+}
+```
+
+### The same runs without FEM
+
+The two `docker run` commands FEM's launcher effectively performs:
+
+```bash
+# client, at each node
+docker run --rm \
+  -v /path/to/Spain/genomic_varcalls:/data:ro \
+  -v /path/to/sandbox:/sandbox \
+  registry.gitlab.bsc.es/fl/gdi-goe-federatedvariantfiltering/goe-fedcomp-client:0.1.0 \
+  goe-client --data-dir /data --out-dir /sandbox --node Spain
+
+# aggregator, at the central node, after copying every goe-counts.<node>.csv into its sandbox
+docker run --rm \
+  -v /path/to/central-sandbox:/sandbox \
+  registry.gitlab.bsc.es/fl/gdi-goe-federatedvariantfiltering/goe-fedcomp-aggregator:0.1.0 \
+  goe-aggregate --in-dir /sandbox --out-dir /sandbox --fst 0.01
+```
+
+Both task commands set `base` to the program name, because neither image
+defines an `ENTRYPOINT`. If your launcher expects `"base": ""` and relies on
+the image's entrypoint, the images need an `ENTRYPOINT` added and rebuilding.

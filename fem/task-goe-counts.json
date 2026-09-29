@@ -6,12 +6,14 @@
   "visibility": "public",
   "image": {
     "label": "goe-fedcomp-client",
-    "hash": "",
+    "hash": "sha256:44ad4654ab9e2f16f71bec824876efd4ba7f8350e8d6c942146bc90b8c5d3565",
     "name": "goe-fedcomp-client",
-    "repository": "REGISTRY",
+    "repository": "registry.gitlab.bsc.es/fl/gdi-goe-federatedvariantfiltering",
     "tag": "0.1.0"
   },
-  "source_code": { "url": "" },
+  "source_code": {
+    "url": ""
+  },
   "persistent": false,
   "pre_checks": true,
   "cpus": 2,
@@ -19,10 +21,42 @@
   "command": {
     "base": "goe-client",
     "args": [
-      { "id": "node",     "type": "str", "default_value": "",         "position": 1, "prefix": "--node",     "separate": true, "required": true  },
-      { "id": "data_dir", "type": "str", "default_value": "/data",    "position": 2, "prefix": "--data-dir", "separate": true, "required": false },
-      { "id": "out_dir",  "type": "str", "default_value": "/sandbox", "position": 3, "prefix": "--out-dir",  "separate": true, "required": false },
-      { "id": "cores",    "type": "int", "default_value": 2,          "position": 4, "prefix": "--cores",    "separate": true, "required": false }
+      {
+        "id": "input",
+        "type": "str",
+        "default_value": "/data",
+        "position": 1,
+        "prefix": "--data-dir",
+        "separate": true,
+        "required": true
+      },
+      {
+        "id": "output",
+        "type": "str",
+        "default_value": "%%sandbox_execution%%",
+        "position": 2,
+        "prefix": "--out-dir",
+        "separate": true,
+        "required": true
+      },
+      {
+        "id": "node",
+        "type": "str",
+        "default_value": "",
+        "position": 3,
+        "prefix": "--node",
+        "separate": true,
+        "required": true
+      },
+      {
+        "id": "cores",
+        "type": "int",
+        "default_value": 2,
+        "position": 4,
+        "prefix": "--cores",
+        "separate": true,
+        "required": false
+      }
     ]
   }
 }
